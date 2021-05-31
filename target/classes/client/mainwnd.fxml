@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="client.MainWndController">
+   <MenuBar>
+     <menus>
+       <Menu mnemonicParsing="false" text="Commands">
+         <items>
+               <MenuItem mnemonicParsing="false" onAction="#newConnect" text="Connect" />
+               <MenuItem mnemonicParsing="false" onAction="#closeConnect" text="Close connection" />
+           <MenuItem mnemonicParsing="false" text="Exite" />
+         </items>
+       </Menu>
+       <Menu mnemonicParsing="false" text="Help">
+         <items>
+           <MenuItem mnemonicParsing="false" text="About" />
+         </items>
+       </Menu>
+     </menus>
+   </MenuBar>
+      <HBox>
+         <VBox>
+         <HBox>
+            <Button mnemonicParsing="false" text="↑" />
+            <TextField fx:id="clientPath" prefHeight="26.0" prefWidth="294.0" />
+         </HBox>
+         <TableView fx:id="clientfiles">
+           <columns>
+             <TableColumn fx:id="file_icon" prefWidth="28.59997594356537" />
+               <TableColumn fx:id="file_name" prefWidth="205.79999351501465" text="name" />
+               <TableColumn fx:id="file_size" text="size" />
+           </columns>
+         </TableView>
+            <HBox>
+            <Button fx:id="clientRefresh" mnemonicParsing="false" onAction="#clientRefreshAction" text="Refresh" />
+               <Button mnemonicParsing="false" text="Make dir" />
+               <Button mnemonicParsing="false" text="Delete" textFill="#c72323" />
+            </HBox>
+         </VBox>
+         <VBox>
+            <Button mnemonicParsing="false" text="&lt;&lt;">
+               <VBox.margin>
+                  <Insets />
+               </VBox.margin></Button>
+            <Button mnemonicParsing="false" text="&gt;&gt;" />
+         <HBox.margin>
+            <Insets />
+         </HBox.margin>
+         <padding>
+            <Insets top="40.0" />
+         </padding>
+         </VBox>
+         <VBox>
+            <HBox>
+               <Button mnemonicParsing="false" text="↑" />
+               <TextField fx:id="serverPath" prefHeight="26.0" prefWidth="294.0" />
+            </HBox>
+             <TableView fx:id="serverfiles" prefWidth="200.0">
+                 <columns>
+                     <TableColumn fx:id="fsicon" prefWidth="28.59997594356537" />
+                     <TableColumn fx:id="fsname" prefWidth="205.79999351501465" text="name" />
+                     <TableColumn fx:id="fssize" text="size" />
+                 </columns>
+             </TableView>
+             <HBox>
+            <Button fx:id="serverRefresh1" mnemonicParsing="false" onAction="#clientRefreshAction" text="Refresh" />
+               <Button mnemonicParsing="false" text="Make dir" />
+               <Button mnemonicParsing="false" text="Delete" textFill="#c72323" />
+            </HBox>
+         </VBox>
+      </HBox>
+</VBox>
