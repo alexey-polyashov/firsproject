@@ -5,6 +5,8 @@ import common.FileInfo;
 import common.FileTypes;
 import javafx.application.Platform;
 import javafx.beans.property.LongProperty;
+import javafx.beans.property.SimpleLongProperty;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -17,7 +19,6 @@ import javafx.scene.control.*;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Path;
@@ -35,9 +36,9 @@ public class MainWndController implements Initializable {
     public TextField serverPath;
 
     class ClientFileInfo{
-        public StringProperty file_icon;
-        public StringProperty file_name;
-        public LongProperty file_size;
+        public StringProperty file_icon = new SimpleStringProperty("");
+        public StringProperty file_name = new SimpleStringProperty("");
+        public LongProperty file_size = new SimpleLongProperty();
         public FileTypes file_type;
 
         public ClientFileInfo(String file_icon, String file_name, long file_size, FileTypes file_type) {
@@ -82,6 +83,7 @@ public class MainWndController implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
         Path p = Paths.get("c:");
         fs = new CloudFileSystem(p, p);
+        readClientFiles();
     }
 
     public void readClientFiles(){
