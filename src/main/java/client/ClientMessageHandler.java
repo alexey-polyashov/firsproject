@@ -14,28 +14,17 @@ public class ClientMessageHandler extends SimpleChannelInboundHandler<Message> {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        log.error(cause.getMessage());
-        FileCloudClient.ShowErrorDlg(cause.getMessage());
+        log.error(cause.toString());
+//        Platform.runLater(()->{
+//            FileCloudClient.ShowErrorDlg(cause.toString());
+//        });
+
     }
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, Message msg) throws Exception {
-        if(msg.command == CommandIDs.RESPONCE_CONNECTIONERROR ||
-            msg.command == CommandIDs.RESPONCE_AUTHERROR){
-            log.error("Auth error - "+msg.commandData.toString());
-            Platform.runLater(()->{
-                FileCloudClient.ShowErrorDlg(msg.commandData.toString());
-            });
-            return;
-        }
-        if(msg.command == CommandIDs.RESPONCE_AUTHOK){
-            log.debug("Auth successfully");
-            Platform.runLater(()->{
-                if(FileCloudClient.authDlg.isShowing()) {
-                    FileCloudClient.authDlg.close();
-                    FileCloudClient.ShowInfoDlg("Success connected");
-                }
-            });
-        }
+
+        Network.getInstance().doCallBack(msg);
+
     }
 }

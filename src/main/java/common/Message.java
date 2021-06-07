@@ -1,11 +1,17 @@
 package common;
 
+import lombok.Builder;
+import lombok.Data;
+
 import java.io.Serializable;
 
+@Data
+@Builder
 public class Message implements Serializable {
-    public int length = 0;
-    public CommandIDs command;
-    public String commandData;
-    public byte[] data;
-    public int partNum = 0;
+    private long length = 0;
+    private CommandIDs command;
+    private String commandData;
+    private byte[] data;
+    private int partNum = 0;
+    private int partLen = 0;
 }

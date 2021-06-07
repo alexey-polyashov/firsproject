@@ -4,7 +4,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<VBox xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="client.MainWndController">
+<VBox VBox.vgrow="ALWAYS" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="client.MainWndController">
    <MenuBar>
      <menus>
        <Menu mnemonicParsing="false" text="Commands">
@@ -21,54 +21,60 @@
        </Menu>
      </menus>
    </MenuBar>
-      <HBox>
-         <VBox>
-         <HBox>
-            <Button mnemonicParsing="false" text="↑" />
-            <TextField fx:id="clientPath" prefHeight="26.0" prefWidth="294.0" />
-         </HBox>
-         <TableView fx:id="clientfiles">
-           <columns>
-             <TableColumn fx:id="file_icon" prefWidth="28.59997594356537" />
-               <TableColumn fx:id="file_name" prefWidth="205.79999351501465" text="name" />
-               <TableColumn fx:id="file_size" text="size" />
-           </columns>
-         </TableView>
-            <HBox>
-            <Button fx:id="clientRefresh" mnemonicParsing="false" onAction="#clientRefreshAction" text="Refresh" />
-               <Button mnemonicParsing="false" text="Make dir" />
-               <Button mnemonicParsing="false" text="Delete" textFill="#c72323" />
+      <HBox HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
+         <VBox HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
+             <HBox HBox.hgrow="ALWAYS">
+                <Button mnemonicParsing="false" text="↑" />
+                <TextField fx:id="clientPath" prefHeight="26.0" prefWidth="294.0" />
+             </HBox>
+             <TableView fx:id="clientFilesTab" editable="true" onKeyPressed="#clientFilesOnKeyPressed" onMouseClicked="#clientFilesOnClick" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
+               <columns>
+                   <TableColumn fx:id="file_icon" maxWidth="35.0" minWidth="35.0" prefWidth="35.0" />
+                   <TableColumn fx:id="file_name" editable="true" prefWidth="198.3999900817871" text="name" />
+                   <TableColumn fx:id="file_size" maxWidth="100.0" text="size" />
+               </columns>
+                <columnResizePolicy>
+                   <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                </columnResizePolicy>
+             </TableView>
+            <HBox HBox.hgrow="ALWAYS">
+                <Button fx:id="clientRefresh" mnemonicParsing="false" onAction="#clientRefreshAction" text="Refresh" />
+                <Button fx:id="mkDir" mnemonicParsing="false" onAction="#mkDirAction" text="Make dir" />
+                <Button fx:id="delete" focusTraversable="false" mnemonicParsing="false" onAction="#deleteAction" text="Delete" textFill="#c72323" />
             </HBox>
          </VBox>
          <VBox>
-            <Button mnemonicParsing="false" text="&lt;&lt;">
+            <Button fx:id="receiveFromServer" focusTraversable="false" mnemonicParsing="false" onAction="#receiveFromServerAction" text="&lt;&lt;">
                <VBox.margin>
                   <Insets />
                </VBox.margin></Button>
-            <Button mnemonicParsing="false" text="&gt;&gt;" />
-         <HBox.margin>
-            <Insets />
-         </HBox.margin>
-         <padding>
-            <Insets top="40.0" />
-         </padding>
+            <Button fx:id="sendToServer" focusTraversable="false" mnemonicParsing="false" onAction="#sendToServerAction" text="&gt;&gt;" />
+             <HBox.margin>
+                <Insets />
+             </HBox.margin>
+             <padding>
+                <Insets top="40.0" />
+             </padding>
          </VBox>
-         <VBox>
-            <HBox>
+         <VBox HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
+            <HBox HBox.hgrow="ALWAYS">
                <Button mnemonicParsing="false" text="↑" />
-               <TextField fx:id="serverPath" prefHeight="26.0" prefWidth="294.0" />
+               <TextField fx:id="serverPath" prefHeight="26.0" prefWidth="294.0" HBox.hgrow="ALWAYS" />
             </HBox>
-             <TableView fx:id="serverfiles" prefWidth="200.0">
+             <TableView fx:id="serverFilesTab" prefWidth="200.0" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
                  <columns>
-                     <TableColumn fx:id="fsicon" prefWidth="28.59997594356537" />
-                     <TableColumn fx:id="fsname" prefWidth="205.79999351501465" text="name" />
-                     <TableColumn fx:id="fssize" text="size" />
+                     <TableColumn fx:id="srvfile_icon" maxWidth="35.0" minWidth="35.0" prefWidth="35.0" />
+                     <TableColumn fx:id="srvfile_name" prefWidth="205.79999351501465" text="name" />
+                     <TableColumn fx:id="srvfile_size" maxWidth="100.0" text="size" />
                  </columns>
+            <columnResizePolicy>
+               <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+            </columnResizePolicy>
              </TableView>
-             <HBox>
-            <Button fx:id="serverRefresh1" mnemonicParsing="false" onAction="#clientRefreshAction" text="Refresh" />
-               <Button mnemonicParsing="false" text="Make dir" />
-               <Button mnemonicParsing="false" text="Delete" textFill="#c72323" />
+             <HBox HBox.hgrow="ALWAYS">
+                <Button fx:id="serverRefresh" mnemonicParsing="false" onAction="#serverRefreshAction" text="Refresh" />
+                <Button fx:id="srv_mkDir" mnemonicParsing="false" onAction="#srv_mkDirAction" text="Make dir" />
+                <Button fx:id="srv_delete" focusTraversable="false" mnemonicParsing="false" onAction="#srv_delete" text="Delete" textFill="#c72323" />
             </HBox>
          </VBox>
       </HBox>

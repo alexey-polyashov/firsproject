@@ -1,6 +1,8 @@
 package common;
 
-public class FileInfo {
+import java.io.Serializable;
+
+public class FileInfo implements Serializable {
 
     public FileTypes fileType;
     public String icon;

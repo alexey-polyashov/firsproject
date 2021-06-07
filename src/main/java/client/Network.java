@@ -1,7 +1,7 @@
 package client;
 
-import common.CloudFileSystem;
 import common.Message;
+import common.MessageParser;
 import common.Options;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFuture;
@@ -21,11 +21,31 @@ import java.io.File;
 @Slf4j
 public class Network {
 
+    private static Network network;
+    public SocketChannel socketChannel;
+    private EventLoopGroup worker;
+    private MessageParser callBack;
 
+    public void doCallBack(Message par){
+        callBack.method(par);
+    }
+
+
+    public EventLoopGroup getWorker(){
+        return worker;
+    }
+
+    public static Network getInstance(){
+        if(network==null){
+            return new Network();
+        }
+        return network;
+    }
 
     public Network() {
-        new Thread(() -> {
-            EventLoopGroup worker = new NioEventLoopGroup();
+        network = this;
+        Thread nwt = new Thread(() -> {
+            worker = new NioEventLoopGroup();
             try {
                 Bootstrap bootstrap = new Bootstrap();
                 bootstrap.group(worker)
@@ -33,7 +53,7 @@ public class Network {
                         .handler(new ChannelInitializer<SocketChannel>() {
                             @Override
                             protected void initChannel(SocketChannel ch) throws Exception {
-                                FileCloudClient.socketChannel = ch;
+                                socketChannel = ch;
                                 ch.pipeline().addLast(
                                         new ObjectEncoder(),
                                         new ObjectDecoder(ClassResolvers.cacheDisabled(null)),
@@ -47,13 +67,17 @@ public class Network {
                 log.error("e = ", e);
             } finally {
                 worker.shutdownGracefully();
+                network = null;
             }
-        }).start();
+        });
+        nwt.setDaemon(true);
+        nwt.start();
     }
 
-    public void sendMessage(Message message) {
-        log.debug("Send message");
-        FileCloudClient.socketChannel.writeAndFlush(message);
+    public void sendMessage(Message message, MessageParser parser) {
+        log.debug("Send message - {}, com.data - {}", message.getCommand(), message.getCommandData());
+        socketChannel.writeAndFlush(message);
+        this.callBack = parser;
     }
 
 

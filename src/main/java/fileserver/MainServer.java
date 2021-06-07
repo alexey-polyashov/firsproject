@@ -20,7 +20,6 @@ public class MainServer {
         EventLoopGroup auth = new NioEventLoopGroup(1);
         EventLoopGroup worker = new NioEventLoopGroup();
         try {
-
             ServerBootstrap bootstrap = new ServerBootstrap();
             bootstrap.group(auth, worker)
                     .channel(NioServerSocketChannel.class)
@@ -30,7 +29,7 @@ public class MainServer {
                             channel.pipeline().addLast(
                                     new ObjectEncoder(),
                                     new ObjectDecoder(ClassResolvers.cacheDisabled(null)),
-                                    new ServerMessageHandler()
+                                    new ServerAuthHandler()
                             );
                         }
                     });

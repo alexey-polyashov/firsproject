@@ -13,19 +13,27 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.TableColumn;
 import javafx.stage.Stage;
+import lombok.extern.slf4j.Slf4j;
 
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ResourceBundle;
 
+@Slf4j
 public class FileCloudClient extends Application {
 
-    private MainWndController mainWndController;
+    static MainWndController mainWndController;
     static Stage mainStage;
-    static SocketChannel socketChannel;
-    static Network netWork;
     static Stage authDlg;
+    private static boolean authOk;
+
+    public static boolean isAuth(){
+        return authOk;
+    }
+    public static void setAuth(boolean p){
+        FileCloudClient.authOk = p;
+    }
 
     static void ShowErrorDlg(String text){
         Alert alert = new Alert(Alert.AlertType.ERROR);
@@ -50,6 +58,16 @@ public class FileCloudClient extends Application {
 
         primaryStage.setTitle("File cloud client");
         primaryStage.setScene(new Scene(root));
+
+        primaryStage.setOnCloseRequest(event -> {
+            log.info("Main window closing");
+            try {
+                Network.getInstance().getWorker().shutdownGracefully();
+            }catch (Exception e){
+
+            }
+        });
+
         primaryStage.show();
 
         mainWndController = loader.getController();
