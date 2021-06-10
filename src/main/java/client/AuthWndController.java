@@ -47,13 +47,13 @@ public class AuthWndController  implements Initializable {
                 .commandData(login.getText() + " " + password.getText())
                 .build();
 
-        network.sendMessage(mes, msg->{
-            CommandIDs cmdID = msg.getCommand();
+        network.sendMessage(mes, (srvMsg, ctx)->{
+            CommandIDs cmdID = srvMsg.getCommand();
             if(cmdID == CommandIDs.RESPONCE_CONNECTIONERROR ||
                     cmdID == CommandIDs.RESPONCE_AUTHERROR){
-                log.error("Auth error - {}",msg.getCommandData());
+                log.error("Auth error - {}",srvMsg.getCommandData());
                 Platform.runLater(()->{
-                    FileCloudClient.ShowErrorDlg(msg.getCommandData());
+                    FileCloudClient.ShowErrorDlg(srvMsg.getCommandData());
                 });
                 return;
             }

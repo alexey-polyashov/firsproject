@@ -63,13 +63,19 @@ public class CloudFileSystem {
         return currentFolder;
     }
 
+    public String getCurrentPath(){
+        if(serverSide){
+            return userFolder.relativize(currentFolder).toString();
+        }
+        return currentFolder.toString();
+    }
+
+
     public void goToParentFolder(){
         if(serverSide){
-            Path pd = currentFolder.toAbsolutePath().getParent();
-            if(pd.equals(Options.SERVER_ROOT)){
+            String relPath = userFolder.relativize(currentFolder).toString();
+            if(relPath.equals("..") || relPath.isEmpty()){
                 return;
-            }else{
-                currentFolder = pd;
             }
         }
         currentFolder = currentFolder.toAbsolutePath().getParent();
@@ -79,6 +85,24 @@ public class CloudFileSystem {
         Path newFolder = Paths.get(currentFolder.toString(), folder);
         if(Files.exists(newFolder)){
             currentFolder = newFolder;
+            return true;
+        }
+        return false;
+    }
+
+    public boolean changeDir(String folder){
+        if(folder==null){
+            return true;
+        }
+        Path newPath = Paths.get(folder);
+        if(serverSide) {
+            newPath = Paths.get(currentFolder.toString(), folder);
+        }
+        else if(!newPath.isAbsolute()){
+            newPath = newPath.toAbsolutePath();
+        }
+        if(Files.exists(newPath)){
+            currentFolder = newPath;
             return true;
         }
         return false;
@@ -115,6 +139,17 @@ public class CloudFileSystem {
         try {
             Files.walkFileTree(currentFolder, new SimpleFileVisitor<Path>() {
                 @Override
+                public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+                    if(Files.isDirectory(file)){
+                        fileList.add(new FileInfo(FileTypes.DIRECTORY, file.getFileName().toString(), 0));
+                    }
+                    else{
+                        fileList.add(new FileInfo(FileTypes.FILE, file.getFileName().toString(), 0));
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException
                 {
                     if(listType >=2) {
@@ -138,7 +173,7 @@ public class CloudFileSystem {
                 }
             });
         } catch (IOException e) {
-            log.error("e=", e);
+            log.error("e=", e.toString());
             return fileList;
         }
         return fileList;
@@ -182,6 +217,7 @@ public class CloudFileSystem {
     public Path getUserFolder() {
         return userFolder;
     }
+
 
     public boolean pathExists(Path path) {
         return Files.exists(path);
@@ -227,7 +263,7 @@ public class CloudFileSystem {
         Message msg = Message.builder()
                 .length(fSize)
                 .partLen(len)
-                .command(CommandIDs.REQUEST_SENDFILE)
+                .command(serverSide ? CommandIDs.RESPONCE_SENDFILE:CommandIDs.REQUEST_SENDFILE)
                 .commandData(absFilePath.getFileName().toString())
                 .partNum(partNum++)
                 .data(data.array())
@@ -242,7 +278,6 @@ public class CloudFileSystem {
     }
 
     public Message putFilePart(Path absFilePath, Message incMes) throws IOException {
-
 
         if(state == FileSystemStates.READFILES){
             throw new IOException("Filesystem expected write data");
@@ -261,7 +296,7 @@ public class CloudFileSystem {
         Message msg = Message.builder()
                 .length(len)
                 .partLen(len)
-                .command(CommandIDs.RESPONCE_FILERECIEVED)
+                .command(serverSide ? CommandIDs.RESPONCE_FILERECIEVED:CommandIDs.REQUEST_RECEIVEFILE )
                 .commandData(incMes.getCommandData())
                 .partNum(incMes.getPartNum())
                 .build();
@@ -280,7 +315,9 @@ public class CloudFileSystem {
     public void resetChannel(){
         log.debug("Reset channel");
         try {
-            sbCh.close();
+            if(sbCh!=null) {
+                sbCh.close();
+            }
         } catch (IOException e) {
             log.error(e.toString());
         }

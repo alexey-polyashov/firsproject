@@ -15,16 +15,12 @@ public class ClientMessageHandler extends SimpleChannelInboundHandler<Message> {
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         log.error(cause.toString());
-//        Platform.runLater(()->{
-//            FileCloudClient.ShowErrorDlg(cause.toString());
-//        });
-
     }
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, Message msg) throws Exception {
 
-        Network.getInstance().doCallBack(msg);
+        Network.getInstance().doCallBack(msg, ctx);
 
     }
 }

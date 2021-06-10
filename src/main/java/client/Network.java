@@ -5,6 +5,7 @@ import common.MessageParser;
 import common.Options;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -26,8 +27,8 @@ public class Network {
     private EventLoopGroup worker;
     private MessageParser callBack;
 
-    public void doCallBack(Message par){
-        callBack.method(par);
+    public void doCallBack(Message par, ChannelHandlerContext ctx){
+        callBack.method(par, ctx);
     }
 
 

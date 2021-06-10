@@ -80,6 +80,57 @@ public class ServerCommandHandler  extends SimpleChannelInboundHandler<Message> 
             }
 
         }
+        else if(cmdID == CommandIDs.REQUEST_UPTOROOT){
+            fs.goToRoot();
+            Message mes = Message.builder()
+                    .command(CommandIDs.RESPONSE_OK)
+                    .commandData(fs.getCurrentPath())
+                    .build();
+            ctx.writeAndFlush(mes);
+        }
+        else if(cmdID == CommandIDs.REQUEST_UPTODIR){
+            fs.goToParentFolder();
+            Message mes = Message.builder()
+                    .command(CommandIDs.RESPONSE_OK)
+                    .commandData(fs.getCurrentPath())
+                    .build();
+            ctx.writeAndFlush(mes);
+        }
+        else if(cmdID == CommandIDs.REQUEST_CHANGEDIR){
+            fs.changeDir(msg.getCommandData());
+            Message mes = Message.builder()
+                    .command(CommandIDs.RESPONSE_OK)
+                    .commandData(fs.getCurrentPath())
+                    .build();
+            ctx.writeAndFlush(mes);
+        }
+        else if(cmdID == CommandIDs.REQUEST_CURRENTFOLDER){
+            Message mes = Message.builder()
+                    .command(CommandIDs.RESPONCE_CURRENTFOLDER)
+                    .commandData(fs.getCurrentPath())
+                    .build();
+            ctx.writeAndFlush(mes);
+        }
+        else if(cmdID == CommandIDs.REQUEST_RECEIVEFILE){
+            Path fName = fs.getAbsolutePathToFile(msg.getCommandData());
+            log.debug("Try to send file {}", fName);
+            try {
+                Message mes = fs.getFilePart(fName);
+                ctx.writeAndFlush(mes);
+            }catch(Exception e){
+                log.error("Read file error: " + e.toString());
+                fs.resetChannel();
+                Message mes = Message.builder()
+                        .command(CommandIDs.RESPONCE_SERVERERROR)
+                        .commandData(e.toString())
+                        .build();
+                ctx.writeAndFlush(mes);
+            }
+        }
+        else if(cmdID == CommandIDs.REQUEST_CLIENTERROR){
+            log.debug("Client error {}", msg.getCommandData());
+            fs.resetChannel();
+        }
         else{
             String str = String.format("Unexpected command: id - %s, data - %s", cmdID, msg.getCommandData());
             log.error(str);
