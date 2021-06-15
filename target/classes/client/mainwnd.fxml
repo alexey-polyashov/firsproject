@@ -27,7 +27,7 @@
                 <Button mnemonicParsing="false" text="↑" fx:id="clientUpDir" onAction="#clientUpDir"/>
                 <TextField fx:id="clientPath" prefHeight="26.0" prefWidth="294.0" HBox.hgrow="ALWAYS"/>
              </HBox>
-             <TableView fx:id="clientFilesTab" editable="true" onKeyPressed="#clientFilesOnKeyPressed" onMouseClicked="#clientFilesOnClick" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
+             <TableView fx:id="clientFilesTab" editable="true" onMouseClicked="#clientFilesOnClick" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
                <columns>
                    <TableColumn fx:id="file_icon" maxWidth="35.0" minWidth="35.0" prefWidth="35.0" />
                    <TableColumn fx:id="file_name" editable="true" prefWidth="198.3999900817871" text="name"/>
@@ -40,6 +40,7 @@
             <HBox HBox.hgrow="ALWAYS">
                 <Button fx:id="clientRefresh" mnemonicParsing="false" onAction="#clientRefreshAction" text="Refresh" />
                 <Button fx:id="mkDir" mnemonicParsing="false" onAction="#mkDirAction" text="Make dir" />
+                <Button fx:id="reName" mnemonicParsing="false" onAction="#reNameAction" text="Rename" />
                 <Button fx:id="delete" focusTraversable="false" mnemonicParsing="false" onAction="#deleteAction" text="Delete" textFill="#c72323" />
             </HBox>
          </VBox>
@@ -58,10 +59,10 @@
          </VBox>
          <VBox HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
             <HBox HBox.hgrow="ALWAYS">
-               <Button mnemonicParsing="false" text="↑" fx:id="servertUpDir" onAction="#servertUpDir"/>
+               <Button mnemonicParsing="false" text="↑" fx:id="servertUpDir" onAction="#serverUpDir"/>
                <TextField fx:id="serverPath" prefHeight="26.0" prefWidth="294.0" HBox.hgrow="ALWAYS" />
             </HBox>
-             <TableView fx:id="serverFilesTab" editable="true"  prefWidth="200.0" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS" onKeyPressed="#serverFilesOnKeyPressed" onMouseClicked="#serverFilesOnClick">
+             <TableView fx:id="serverFilesTab" editable="true"  prefWidth="200.0" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS" onMouseClicked="#serverFilesOnClick">
                  <columns>
                      <TableColumn fx:id="srvfile_icon" maxWidth="35.0" minWidth="35.0" prefWidth="35.0" />
                      <TableColumn fx:id="srvfile_name" prefWidth="205.79999351501465" text="name" editable="true" />
@@ -74,6 +75,7 @@
              <HBox HBox.hgrow="ALWAYS">
                 <Button fx:id="serverRefresh" mnemonicParsing="false" onAction="#serverRefreshAction" text="Refresh" />
                 <Button fx:id="srv_mkDir" mnemonicParsing="false" onAction="#srv_mkDirAction" text="Make dir" />
+                <Button fx:id="srv_reName" mnemonicParsing="false" onAction="#srv_reNameAction" text="Rename" />
                 <Button fx:id="srv_delete" focusTraversable="false" mnemonicParsing="false" onAction="#srv_delete" text="Delete" textFill="#c72323" />
             </HBox>
          </VBox>

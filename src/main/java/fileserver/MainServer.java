@@ -39,6 +39,7 @@ public class MainServer {
         } catch (Exception e) {
             log.error("e=", e);
         } finally {
+            log.debug("Network shutdown");
             auth.shutdownGracefully();
             worker.shutdownGracefully();
         }

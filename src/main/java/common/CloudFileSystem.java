@@ -132,6 +132,8 @@ public class CloudFileSystem {
             dirPath = getAbsolutePathToFile(dirPath);
         }
 
+        log.debug("Find all files in directory {}", dirPath);
+
         File filePath = new File(String.valueOf(dirPath));
         for (File f: filePath.listFiles()) {
             if(f.isFile()){
@@ -156,6 +158,8 @@ public class CloudFileSystem {
                 dir = getAbsolutePathToFile(dir);
             }
 
+            log.debug("Find all files in directory {}", dir);
+
             Files.walkFileTree(dir, new SimpleFileVisitor<Path>() {
                 @Override
                 public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
@@ -165,7 +169,15 @@ public class CloudFileSystem {
                 @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException
                 {
-                    fileList.add(new FileInfo(FileTypes.FILE, file.toString(), attrs.size()));
+                    Path relPath;
+                    if(serverSide){
+                        relPath = userFolder.relativize(file);
+                    }else{
+                        relPath = file;
+                    }
+
+                    fileList.add(new FileInfo(FileTypes.FILE, relPath.toString(), attrs.size()));
+                    log.debug("File add in list {}", file.toString());
                     return FileVisitResult.CONTINUE;
                 }
 
@@ -188,6 +200,7 @@ public class CloudFileSystem {
             if(!dir.isAbsolute()){
                 dir = getAbsolutePathToFile(dir);
             }
+            log.debug("Find all subfolders in directory {}", dir);
 
             Files.walkFileTree(dir, new SimpleFileVisitor<Path>() {
                 @Override
@@ -197,7 +210,14 @@ public class CloudFileSystem {
 
                 @Override
                 public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-                    folderList.add(new FileInfo(FileTypes.DIRECTORY, dir.toString(), attrs.size()));
+                    Path relPath;
+                    if(serverSide){
+                        relPath = userFolder.relativize(dir);
+                    }else{
+                        relPath = dir;
+                    }
+                    folderList.add(new FileInfo(FileTypes.DIRECTORY, relPath.toString(), attrs.size()));
+                    log.debug("Subfolder add in list {}", dir.toString());
                     return FileVisitResult.CONTINUE;
                 }
 
@@ -291,10 +311,13 @@ public class CloudFileSystem {
     }
 
     public boolean makeDir(Path newDir) throws IOException {
+        log.debug("Make dir {}", newDir.toString());
         if(newDir.isAbsolute()){
             Files.createDirectory(newDir);
         }else{
-            Files.createDirectory(getAbsolutePathToFile(newDir));
+            Path absPath = getAbsolutePathToFile(newDir);
+            log.debug("Transform to absolute path {}", absPath.toString());
+            Files.createDirectory(absPath);
         }
         return true;
     }
@@ -305,7 +328,11 @@ public class CloudFileSystem {
 
 
     public boolean pathExists(Path path) {
-        return Files.exists(path);
+        if(path.isAbsolute()){
+            return Files.exists(path);
+        }else{
+            return Files.exists(getAbsolutePathToFile(path));
+        }
     }
 
     public boolean move(String oldName, String newName) throws IOException {
@@ -328,11 +355,19 @@ public class CloudFileSystem {
     }
 
     public Path getAbsolutePathToFile(String fName){
-        return Paths.get(currentFolder.toString(), fName);
+        if(Paths.get(fName).isAbsolute()){
+            return Paths.get(fName);
+        }else{
+            return Paths.get(currentFolder.toString(), fName);
+        }
     }
 
     public Path getAbsolutePathToFile(Path fName){
-        return Paths.get(currentFolder.toString(), fName.getFileName().toString());
+        if(fName.isAbsolute()){
+            return fName;
+        }else{
+            return Paths.get(currentFolder.toString(), fName.toString());
+        }
     }
 
     public Message getFilePart(Path absFilePath) throws IOException {
@@ -353,7 +388,7 @@ public class CloudFileSystem {
                 .length(fSize)
                 .partLen(len)
                 .command(serverSide ? CommandIDs.RESPONCE_SENDFILE:CommandIDs.REQUEST_SENDFILE)
-                .commandData(absFilePath.getFileName().toString())
+                .commandData(currentFolder.relativize(absFilePath).toString())
                 .partNum(partNum++)
                 .data(data.array())
                 .build();

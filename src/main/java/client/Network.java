@@ -21,7 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 public class Network {
 
     private static Network network;
-    public SocketChannel socketChannel;
+    private SocketChannel socketChannel;
     private EventLoopGroup worker;
     private MessageParser callBack;
 
@@ -29,6 +29,9 @@ public class Network {
         callBack.method(par, ctx);
     }
 
+    public SocketChannel getSocketChannel() {
+        return socketChannel;
+    }
 
     public EventLoopGroup getWorker(){
         return worker;
@@ -39,6 +42,14 @@ public class Network {
             return new Network();
         }
         return network;
+    }
+
+    public static void shutDown(){
+        if(network!=null){
+            EventLoopGroup worker = network.getWorker();
+            worker.shutdownGracefully();
+            network = null;
+        }
     }
 
     public Network() {
@@ -65,6 +76,7 @@ public class Network {
             } catch (Exception e) {
                 log.error("e = ", e);
             } finally {
+                log.debug("Network shutdown");
                 worker.shutdownGracefully();
                 network = null;
             }

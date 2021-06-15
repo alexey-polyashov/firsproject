@@ -4,11 +4,10 @@ import common.*;
 
 import javafx.application.Platform;
 import javafx.beans.property.*;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -17,14 +16,14 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Callback;
 import lombok.Data;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import sun.nio.ch.Net;
 
 import java.io.*;
 import java.net.URL;
@@ -48,10 +47,6 @@ public class MainWndController implements Initializable {
     public AtomicInteger processedFiles = new AtomicInteger();
     public StringBuffer currentProcesseddFile = new StringBuffer("");
     public volatile AtomicBoolean isTransferOn = new AtomicBoolean(false);
-
-    private boolean notApplyFocusChange = false;
-    private boolean forceEditCell = false;
-    private boolean forceMakeDir = false;
 
     private Network network;
 
@@ -123,97 +118,6 @@ public class MainWndController implements Initializable {
         }
     }
 
-    class EditingCell extends TableCell<TableFileInfo, String>{
-
-        private TextField textField;
-
-
-        public EditingCell() {
-        }
-
-
-        @Override
-        public void startEdit() {
-            if (forceEditCell || !isEmpty()) {
-                TableView<TableFileInfo> currentTable = this.getTableView();
-                TableFileInfo ti = currentTable.getItems().get(currentTable.getEditingCell().getRow());
-                if(!forceEditCell && ti.isEditIsOn()!=true && ti.getFile_type()!=FileTypes.FILE){
-                    cancelEdit();
-                }
-                else{
-                    super.startEdit();
-                    ti.setEditIsOn(false);
-                    createTextField();
-                    setText(null);
-                    setGraphic(textField);
-                    textField.selectAll();
-                }
-            }
-            forceEditCell = false;
-        }
-
-
-        @Override
-        public void cancelEdit() {
-            super.cancelEdit();
-            setText((String) getItem());
-            setGraphic(null);
-        }
-
-        @Override
-        public void commitEdit(String newValue) {
-            super.commitEdit(newValue);
-        }
-
-        @Override
-        public void updateItem(String item, boolean empty) {
-            super.updateItem(item, empty);
-
-            if (empty) {
-                setText(null);
-                setGraphic(null);
-            } else {
-                if (isEditing()) {
-                    if (textField != null) {
-                        textField.setText(getString());
-                    }
-                    setText(null);
-                    setGraphic(textField);
-                } else {
-                    setText(getString());
-                    setGraphic(null);
-                }
-            }
-        }
-
-        private void createTextField() {
-            textField = new TextField(getString());
-            textField.setMinWidth(this.getWidth() - this.getGraphicTextGap()* 2);
-            textField.setOnKeyPressed(event->{
-                if(event.getCode()==KeyCode.ENTER) {
-                    commitEdit(textField.getText());
-                }
-            });
-            textField.focusedProperty().addListener(new ChangeListener<Boolean>(){
-                @Override
-                public void changed(ObservableValue<? extends Boolean> arg0,
-                                    Boolean arg1, Boolean arg2) {
-                    if (!arg2) {
-                        if(notApplyFocusChange == true){
-                            notApplyFocusChange = false;
-                        }else {
-                            commitEdit(textField.getText());
-                        }
-                    }
-                }
-
-            });
-        }
-
-        private String getString() {
-            return getItem() == null ? "" : getItem().toString();
-        }
-    }
 
 
     @Override
@@ -228,114 +132,95 @@ public class MainWndController implements Initializable {
 
         network = Network.getInstance();
 
+        clientFilesTab.setRowFactory(
+                new Callback<TableView<TableFileInfo>, TableRow<TableFileInfo>>() {
+                    @Override
+                    public TableRow<TableFileInfo> call(TableView<TableFileInfo> param) {
+                        final TableRow<TableFileInfo> row = new TableRow<>();
+                        final ContextMenu rowMenu = new ContextMenu();
+                        MenuItem renameItem = new MenuItem("Rename");
+                        renameItem.setOnAction(new EventHandler<ActionEvent>() {
+                            @Override
+                            public void handle(ActionEvent event) {
+                                reNameAction(event);
+                            }
+                        });
+                        MenuItem deleteItem = new MenuItem("Delete");
+                        deleteItem.setOnAction(new EventHandler<ActionEvent>() {
+                            @SneakyThrows
+                            @Override
+                            public void handle(ActionEvent event) {
+                                deleteAction(event);
+                            }
+                        });
+                        MenuItem sendItem = new MenuItem("Send");
+                        sendItem.setOnAction(new EventHandler<ActionEvent>() {
+                            @SneakyThrows
+                            @Override
+                            public void handle(ActionEvent event) {
+                                sendToServerAction(event);
+                            }
+                        });
+                        MenuItem makeDir = new MenuItem("Make dir");
+                        makeDir.setOnAction(new EventHandler<ActionEvent>() {
+                            @SneakyThrows
+                            @Override
+                            public void handle(ActionEvent event) {
+                                mkDirAction(event);
+                            }
+                        });
+                        rowMenu.getItems().addAll( renameItem, deleteItem, makeDir, sendItem);
+                        row.setContextMenu(rowMenu);
+                        return row;
+                    }
+                }
+        );
+
+        serverFilesTab.setRowFactory(
+                new Callback<TableView<TableFileInfo>, TableRow<TableFileInfo>>() {
+                    @Override
+                    public TableRow<TableFileInfo> call(TableView<TableFileInfo> param) {
+                        final TableRow<TableFileInfo> row = new TableRow<>();
+                        final ContextMenu rowMenu = new ContextMenu();
+                        MenuItem renameItem = new MenuItem("Rename");
+                        renameItem.setOnAction(new EventHandler<ActionEvent>() {
+                            @Override
+                            public void handle(ActionEvent event) {
+                                srv_reNameAction(event);
+                            }
+                        });
+                        MenuItem deleteItem = new MenuItem("Delete");
+                        deleteItem.setOnAction(new EventHandler<ActionEvent>() {
+                            @SneakyThrows
+                            @Override
+                            public void handle(ActionEvent event) {
+                                srv_delete(event);
+                            }
+                        });
+                        MenuItem sendItem = new MenuItem("Receive");
+                        sendItem.setOnAction(new EventHandler<ActionEvent>() {
+                            @SneakyThrows
+                            @Override
+                            public void handle(ActionEvent event) {
+                                receiveFromServerAction(event);
+                            }
+                        });
+                        MenuItem makeDir = new MenuItem("Make dir");
+                        makeDir.setOnAction(new EventHandler<ActionEvent>() {
+                            @SneakyThrows
+                            @Override
+                            public void handle(ActionEvent event) {
+                                srv_mkDirAction(event);
+                            }
+                        });
+                        rowMenu.getItems().addAll( renameItem, deleteItem, makeDir, sendItem);
+                        row.setContextMenu(rowMenu);
+                        return row;
+                    }
+                }
+        );
+
         readFiles(clientFilesTab, file_name, file_icon, file_size, fs.getFullList());
-
-        Callback<TableColumn<TableFileInfo, String>, TableCell<TableFileInfo, String>> cellFactory =
-                new Callback<TableColumn<TableFileInfo, String>, TableCell<TableFileInfo, String>>() {
-                    public TableCell call(TableColumn p) {
-                        return new EditingCell();
-                    }
-                };
-
-        file_name.setCellFactory(cellFactory);
-        file_name.setOnEditCommit(cellData -> {
-
-            notApplyFocusChange = true;
-
-            String newName = cellData.getNewValue();
-            String oldName = cellData.getOldValue();
-
-            Path newPath = Paths.get(fs.getCurrentFolder().toString(), newName);
-
-            if(forceMakeDir){
-                if (!fs.pathExists(newPath)) {
-                    try {
-                        fs.makeDir(newPath);
-                    } catch (IOException e) {
-                        FileCloudClient.ShowErrorDlg("Error:" + e.toString());
-                    }
-                }
-                else {
-                    clientFilesTab.getItems().get(cellData.getTableView().getEditingCell().getRow()).setEditIsOn(false);
-                    FileCloudClient.ShowErrorDlg("Directory name already exists, directory don't create!");
-                }
-            }
-            else {
-                if(newName.equals(oldName)){
-                    return;
-                }
-                if (!fs.pathExists(newPath)) {
-                    try {
-                        fs.move(oldName, newName);
-                    } catch (IOException e) {
-                        FileCloudClient.ShowErrorDlg("Error:" + e.toString());
-                    }
-                }
-                else {
-                    clientFilesTab.getItems().get(cellData.getTableView().getEditingCell().getRow()).setEditIsOn(false);
-                    FileCloudClient.ShowErrorDlg("File name already exists, rename cancel");
-                }
-            }
-            forceMakeDir = false;
-            readFiles(clientFilesTab, file_name, file_icon, file_size, fs.getFullList());
-
-        });
-
-        srvfile_name.setCellFactory(cellFactory);
-        srvfile_name.setOnEditCommit(cellData -> {
-
-            notApplyFocusChange = true;
-
-            String newName = cellData.getNewValue();
-            String oldName = cellData.getOldValue();
-
-            if(forceMakeDir){
-
-                Message msg = Message.builder()
-                        .command(CommandIDs.REQUEST_MKDIR)
-                        .commandData(newName)
-                        .build();
-
-                network.sendMessage(msg, (srvMsg, ctx) -> {
-                    if (srvMsg.getCommand() == CommandIDs.RESPONCE_FILEEXIST) {
-                        Platform.runLater(() -> {
-                            FileCloudClient.ShowErrorDlg("Directory name already exists, directory don't create!");
-                        });
-                    } else if (srvMsg.getCommand() != CommandIDs.RESPONCE_OK) {
-                        Platform.runLater(() -> {
-                            FileCloudClient.ShowErrorDlg("Server error: " + srvMsg.getCommandData());
-                        });
-                    }
-                });
-
-            }else {
-
-                if(newName.equals(oldName)){
-                    return;
-                }
-
-                Message msg = Message.builder()
-                        .command(CommandIDs.REQUEST_MOVE)
-                        .commandData(newName)
-                        .commandData2(oldName)
-                        .build();
-
-                network.sendMessage(msg, (srvMsg, ctx) -> {
-                    if (srvMsg.getCommand() == CommandIDs.RESPONCE_FILEEXIST) {
-                        Platform.runLater(() -> {
-                            FileCloudClient.ShowErrorDlg("File with such name already exist, rename canceled!");
-                        });
-                    } else if (srvMsg.getCommand() != CommandIDs.RESPONCE_OK) {
-                        Platform.runLater(() -> {
-                            FileCloudClient.ShowErrorDlg("Server error: " + srvMsg.getCommandData());
-                        });
-                    }
-                });
-            }
-            forceMakeDir = false;
-            getServerFiles();
-
-        });
 
     }
 
@@ -350,8 +235,23 @@ public class MainWndController implements Initializable {
         serverFilesTab.getSelectionModel().getSelectedIndices();
         ObservableList<TableFileInfo> selFiles = serverFilesTab.getSelectionModel().getSelectedItems();
 
-        for (TableFileInfo ti : selFiles) {
-            fullTransferSize.getAndAdd(ti.getRealfile_size());
+        List<FileInfo> fileList = new ArrayList<>();
+
+        for (TableFileInfo ti: selFiles) {
+            if(ti.getFile_type() == FileTypes.DIRECTORY){
+                List<FileInfo> buf = getSubFoldersInServerDir(Paths.get(ti.getFile_name().getValue()));
+                fileList.addAll(buf);
+                buf.clear();
+                buf = getFilesInServerDir(Paths.get(ti.getFile_name().getValue()));
+                fileList.addAll(buf);
+                buf.clear();
+            }else{
+                fileList.add(new FileInfo(FileTypes.FILE, ti.getFile_name().getValue(), ti.getRealfile_size()));
+            }
+        }
+
+        for (FileInfo ti : fileList) {
+            fullTransferSize.getAndAdd(ti.getSize());
             filesCount.getAndIncrement();
         }
 
@@ -367,7 +267,6 @@ public class MainWndController implements Initializable {
         pgWindow.initOwner(FileCloudClient.mainStage);
         pgWindow.show();
 
-
         pgController.startProgress(new Task<Void>() {
             @Override
             protected void cancelled() {
@@ -378,17 +277,19 @@ public class MainWndController implements Initializable {
             @Override
             protected Void call() throws Exception {
 
-                for (TableFileInfo ti : selFiles) {
+                for (FileInfo fi : fileList) {
 
-                    if (ti.file_type != FileTypes.FILE) {
+                    if(fi.getFileType() == FileTypes.DIRECTORY){
+                        log.debug("Create directory {}", fi.getName());
+                        fs.makeDir(Paths.get(fi.getName()));
                         continue;
                     }
 
-                    String fName = ti.file_name.getValue();
+                    String fName = fi.getName();
                     currentProcesseddFile = new StringBuffer(fName);
                     updateMessage(currentProcesseddFile.toString());
 
-                    log.debug("Start receive file: {}", ti.getFile_name().getValue());
+                    log.debug("Start receive file: {}", fi.getName());
 
                     AtomicInteger chunkNum = new AtomicInteger();
 
@@ -480,6 +381,101 @@ public class MainWndController implements Initializable {
 
     }
 
+    private void setInList(List<FileInfo> dest, List<FileInfo> source){
+        dest.addAll(source);
+    }
+
+    private List<FileInfo> getFilesInServerDir(Path path) throws InterruptedException {
+
+        List<FileInfo> fileList = new ArrayList<FileInfo>();
+
+        Message mes = Message.builder()
+                .command(CommandIDs.REQUEST_RECEIVEFILESINDIR)
+                .commandData(path.toString())
+                .build();
+
+        Semaphore waitForList = new Semaphore(1);
+        waitForList.acquire();
+        network.sendMessage(mes, (srvMes, ctx)->{
+            if(srvMes.getCommand()==CommandIDs.RESPONCE_OK){
+                try (
+                        ByteArrayInputStream bis = new ByteArrayInputStream(srvMes.getData());
+                        ObjectInputStream ois = new ObjectInputStream(bis);
+                ) {
+                    setInList(fileList, (List<FileInfo>) ois.readObject());
+                }catch (Exception e){
+                    log.error(e.toString());
+                    Platform.runLater(()->{
+                        FileCloudClient.ShowErrorDlg("Error: " + e.toString());
+                    });
+                }finally {
+                    waitForList.release();
+                }
+            }else if (srvMes.getCommand()==CommandIDs.RESPONCE_SERVERERROR){
+                log.error("Server error: {}", srvMes.getCommandData());
+                waitForList.release();
+                Platform.runLater(()->{
+                    FileCloudClient.ShowErrorDlg("Server error: " + srvMes.getCommandData());
+                });
+            }else{
+                log.error("Unexpected answer: id - {}, data - {}", srvMes.getCommandData());
+                waitForList.release();
+                Platform.runLater(()->{
+                    FileCloudClient.ShowErrorDlg("Unexpected answer from server");
+                });
+            }
+        });
+        waitForList.acquire();
+        return fileList;
+
+
+    }
+
+    private List<FileInfo> getSubFoldersInServerDir(Path path) throws InterruptedException {
+
+        List<FileInfo> fileList = new ArrayList<FileInfo>();
+
+        Message mes = Message.builder()
+                .command(CommandIDs.REQUEST_RECEIVEFOLDERSINDIR)
+                .commandData(path.toString())
+                .build();
+
+        Semaphore waitForList = new Semaphore(1);
+        waitForList.acquire();
+        network.sendMessage(mes, (srvMes, ctx)->{
+            if(srvMes.getCommand()==CommandIDs.RESPONCE_OK){
+                try (
+                        ByteArrayInputStream bis = new ByteArrayInputStream(srvMes.getData());
+                        ObjectInputStream ois = new ObjectInputStream(bis);
+                ) {
+                    setInList(fileList, (List<FileInfo>) ois.readObject());
+                }catch (Exception e){
+                    log.error(e.toString());
+                    Platform.runLater(()->{
+                        FileCloudClient.ShowErrorDlg("Error: " + e.toString());
+                    });
+                }finally {
+                    waitForList.release();
+                }
+            }else if (srvMes.getCommand()==CommandIDs.RESPONCE_SERVERERROR){
+                log.error("Server error: {}", srvMes.getCommandData());
+                waitForList.release();
+                Platform.runLater(()->{
+                    FileCloudClient.ShowErrorDlg("Server error: " + srvMes.getCommandData());
+                });
+            }else{
+                log.error("Unexpected answer: id - {}, data - {}", srvMes.getCommandData());
+                waitForList.release();
+                Platform.runLater(()->{
+                    FileCloudClient.ShowErrorDlg("Unexpected answer from server");
+                });
+            }
+        });
+        waitForList.acquire();
+        return fileList;
+
+    }
+
     public void sendToServerAction(ActionEvent actionEvent) throws IOException {
 
         fullTransferSize.set(0);
@@ -491,10 +487,28 @@ public class MainWndController implements Initializable {
         clientFilesTab.getSelectionModel().getSelectedIndices();
         ObservableList<TableFileInfo> selFiles = clientFilesTab.getSelectionModel().getSelectedItems();
 
-        for (TableFileInfo ti : selFiles) {
-            fullTransferSize.getAndAdd(ti.getRealfile_size());
+        List<FileInfo> fileList = new ArrayList<>();
+
+        for (TableFileInfo ti: selFiles) {
+            if(ti.getFile_type() == FileTypes.DIRECTORY){
+                List<FileInfo> buf = fs.getSubFoldersInDir(Paths.get(ti.getFile_name().getValue()));
+                fileList.addAll(buf);
+                buf.clear();
+                buf = fs.getFilesInDir(Paths.get(ti.getFile_name().getValue()));
+                fileList.addAll(buf);
+                buf.clear();
+            }else{
+                fileList.add(new FileInfo(FileTypes.FILE, ti.getFile_name().getValue(), ti.getRealfile_size()));
+            }
+        }
+
+        for (FileInfo fi : fileList) {
+            fullTransferSize.getAndAdd(fi.getSize());
             filesCount.getAndIncrement();
         }
+
+        log.debug("Total transfer size {}", fullTransferSize.get());
+        log.debug("Total transfer files {}", filesCount.get());
 
         isTransferOn.set(true);
 
@@ -508,52 +522,112 @@ public class MainWndController implements Initializable {
         pgWindow.show();
 
         pgController.startProgress(new Task<Void>() {
+
+            @Override
+            protected void succeeded() {
+                super.succeeded();
+                log.debug("Task for transfer succeeded");
+            }
+
             @Override
             protected void cancelled() {
-                isTransferOn.set(false);
                 super.cancelled();
+                isTransferOn.set(false);
             }
 
             @Override
             protected Void call() throws Exception {
 
+                for (FileInfo fi : fileList) {
 
-                for (TableFileInfo ti : selFiles) {
-
-                    if (ti.file_type != FileTypes.FILE) {
-                        continue;
+                    if(isCancelled()){
+                        log.debug("Task for transfer file is canceled");
+                        break;
                     }
 
-                    String fName = ti.file_name.getValue();
+                    if (fi.getFileType() == FileTypes.DIRECTORY) {
+
+                        Semaphore waitForMKDir = new Semaphore(1);
+
+                        Path absPath = fs.getAbsolutePathToFile(fi.getName());
+                        String dirName = fs.getCurrentFolder().relativize(absPath).toString();
+
+                        Message msg = Message.builder()
+                                .command(CommandIDs.REQUEST_MKDIR)
+                                .commandData(dirName)
+                                .build();
+                        log.debug("Try to make dir {}", dirName);
+
+                        waitForMKDir.acquire();
+
+                        network.sendMessage(msg, (srvMsg, ctx) -> {
+                            try {
+                                log.debug("Receive command - {}, command data - {}", srvMsg.getCommand(), srvMsg.getCommandData());
+                                if (srvMsg.getCommand() == CommandIDs.RESPONCE_FILEEXIST) {
+                                    cancel();
+                                    Platform.runLater(() -> {
+                                        FileCloudClient.ShowErrorDlg("Directory name already exists, directory don't create!");
+                                    });
+                                } else if (srvMsg.getCommand() != CommandIDs.RESPONCE_OK){
+                                    cancel();
+                                    Platform.runLater(() -> {
+                                        FileCloudClient.ShowErrorDlg("Server error: " + srvMsg.getCommandData());
+                                    });
+                                }
+                            } finally {
+                                waitForMKDir.release();
+                            }
+
+                        });
+
+                        waitForMKDir.acquire();
+                        log.debug("Make dir is passed");
+                        continue;
+
+                    }
+
+                    String fName = fi.getName();
                     Path absPath = fs.getAbsolutePathToFile(fName);
                     currentProcesseddFile = new StringBuffer(fName);
                     updateMessage(currentProcesseddFile.toString());
 
-                    log.debug("Start transfer file: {}", ti.getFile_name().getValue());
+                    log.debug("Start transfer file: {}", fName);
 
                     int chunkNum = 0;
 
                     while (true) {
 
-                        log.debug("Transfer filepart: {}", chunkNum);
+                        if(isCancelled()){
+                            log.debug("Task for transfer file is canceled");
+                            fs.resetChannel();
+                            break;
+                        }
 
                         try {
                             Message msg = fs.getFilePart(absPath);
+                            Semaphore waitForChunk = new Semaphore(1);
+                            waitForChunk.acquire();
+                            log.debug("Transfer file part: {}", chunkNum);
                             network.sendMessage(msg, (srvMsg, ctx) -> {
-                                        if(isTransferOn.get()==false){
-                                            fs.resetChannel();
-                                        }
-                                        log.debug("Receive command - {}, command data - {}", srvMsg.getCommand(), srvMsg.getCommandData());
-                                        if (srvMsg.getCommand() != CommandIDs.RESPONCE_FILERECIEVED) {
-                                            fs.resetChannel();
-                                            final String errorText = "Server error: " + srvMsg.getCommandData();
-                                            Platform.runLater(() -> {
-                                                FileCloudClient.ShowErrorDlg(errorText);
-                                            });
-                                        }
+                                try {
+                                    log.debug("Receive command - {}, command data - {}", srvMsg.getCommand(), srvMsg.getCommandData());
+                                    if (isTransferOn.get() == false) {
+                                        fs.resetChannel();
                                     }
-                            );
-
+                                    if (srvMsg.getCommand() != CommandIDs.RESPONCE_FILERECIEVED) {
+                                        log.error("Server error: {}", srvMsg.getCommandData());
+                                        fs.resetChannel();
+                                        final String errorText = "Server error: " + srvMsg.getCommandData();
+                                        Platform.runLater(() -> {
+                                            FileCloudClient.ShowErrorDlg(errorText);
+                                        });
+                                    }
+                                }finally {
+                                    waitForChunk.release();
+                                }
+                            });
+                            waitForChunk.acquire();
+                            log.debug("Transfer file part complete: {}", chunkNum);
                             transferSize.addAndGet(msg.getPartLen());
                             updateProgress(transferSize.get(), fullTransferSize.get());
                             chunkNum++;
@@ -581,7 +655,10 @@ public class MainWndController implements Initializable {
                 }
 
                 isTransferOn.set(false);
-                pgWindow.close();
+                log.debug("Close progress");
+                Platform.runLater(()->{
+                    pgWindow.close();
+                });
 
                 getServerFiles();
                 return null;
@@ -591,20 +668,73 @@ public class MainWndController implements Initializable {
     }
 
     public void mkDirAction(ActionEvent actionEvent) {
+
         ObservableList<TableFileInfo> its = clientFilesTab.getItems();
-        int coincident = 0;
-        for (TableFileInfo tInf: its) {
-            if(tInf.getFile_name().getValue().startsWith("Новая папка")){
-                coincident++;
+        TextInputDialog dialog = new TextInputDialog("");
+        dialog.setTitle("Make directory");
+        dialog.setHeaderText("Enter new directory name");
+        dialog.setContentText("Name");
+        Optional<String> result = dialog.showAndWait();
+
+        final String[] dirName = {""};
+        result.ifPresent(name->{
+            dirName[0] = name;
+        });
+
+        Path newPath = Paths.get(fs.getCurrentFolder().toString(), dirName[0]);
+        if(!dirName[0].isEmpty()){
+            if (!fs.pathExists(newPath)) {
+                try {
+                    fs.makeDir(newPath);
+                    readFiles(clientFilesTab, file_name, file_icon, file_size, fs.getFullList());
+                } catch (IOException e) {
+                    FileCloudClient.ShowErrorDlg("Error:" + e.toString());
+                }
+            }
+            else {
+                FileCloudClient.ShowErrorDlg("Directory name already exists, directory don't create!");
             }
         }
-        its.add(new TableFileInfo("D", "Новая папка" + (coincident==0 ? "": " " + coincident),0, FileTypes.DIRECTORY));
-        clientFilesTab.getSelectionModel().select(its.size()-1);
-        forceEditCell = true;
-        forceMakeDir = true;
-        Platform.runLater(()->{
-            clientFilesTab.edit(its.size()-1, file_name);
+
+    }
+
+    public void reNameAction(ActionEvent actionEvent) {
+
+        ObservableList<TableFileInfo> its = clientFilesTab.getItems();
+
+        int ind = clientFilesTab.getSelectionModel().getSelectedIndex();
+        TableFileInfo currentRow = its.get(ind);
+        String oldName = currentRow.getFile_name().getValue();
+
+        TextInputDialog dialog = new TextInputDialog(currentRow.getFile_name().getValue());
+        dialog.setTitle("Rename file/directory");
+        dialog.setHeaderText("Enter new file/directory name");
+        dialog.setContentText("Name");
+        Optional<String> result = dialog.showAndWait();
+
+        final String[] dirName = {""};
+        result.ifPresent(name->{
+            dirName[0] = name;
         });
+
+        String newName = dirName[0];
+
+        if(!dirName[0].isEmpty()){
+            if(newName.equals(oldName)){
+                return;
+            }
+            if (!fs.pathExists(Paths.get(newName))) {
+                try {
+                    fs.move(oldName, newName);
+                    readFiles(clientFilesTab, file_name, file_icon, file_size, fs.getFullList());
+                } catch (IOException e) {
+                    FileCloudClient.ShowErrorDlg("Error:" + e.toString());
+                }
+            }
+            else {
+                FileCloudClient.ShowErrorDlg("File or directory name already exists, rename canceled!");
+            }
+        }
 
     }
 
@@ -613,6 +743,23 @@ public class MainWndController implements Initializable {
         int totalFiles = 0;
 
         ObservableList<TableFileInfo> selectedItems = clientFilesTab.getSelectionModel().getSelectedItems();
+
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Delete file");
+        String descDelFiles = "";
+        if(selectedItems.size()<5){
+            for (TableFileInfo ti: selectedItems) {
+                descDelFiles += ti.getFile_name().getValue()+"\n";
+            }
+        }else{
+            descDelFiles = selectedItems.size() + " selected items";
+        }
+        alert.setHeaderText("A you sure want to delete file(s)?");
+        alert.setContentText(descDelFiles);
+        Optional<ButtonType> option = alert.showAndWait();
+        if(option.get() != ButtonType.OK){
+            return;
+        }
 
         List<FileInfo> fileList = new ArrayList<>();
 
@@ -693,22 +840,116 @@ public class MainWndController implements Initializable {
     public void srv_mkDirAction(ActionEvent actionEvent) {
 
         ObservableList<TableFileInfo> its = serverFilesTab.getItems();
-        int coincident = 0;
-        for (TableFileInfo tInf: its) {
-            if(tInf.getFile_name().getValue().startsWith("Новая папка")){
-                coincident++;
-            }
+
+        TextInputDialog dialog = new TextInputDialog("");
+        dialog.setTitle("Make directory");
+        dialog.setHeaderText("Enter new directory name");
+        dialog.setContentText("Name");
+        Optional<String> result = dialog.showAndWait();
+
+        final String[] dirName = {""};
+        result.ifPresent(name->{
+            dirName[0] = name;
+        });
+
+        String newName = dirName[0];
+
+        if(!dirName[0].isEmpty()){
+
+            Message msg = Message.builder()
+                    .command(CommandIDs.REQUEST_MKDIR)
+                    .commandData(newName)
+                    .build();
+
+            network.sendMessage(msg, (srvMsg, ctx) -> {
+                if(srvMsg.getCommand() == CommandIDs.RESPONCE_OK){
+                    Platform.runLater(() -> {
+                        getServerFiles();
+                    });
+                }else if (srvMsg.getCommand() == CommandIDs.RESPONCE_FILEEXIST) {
+                    Platform.runLater(() -> {
+                        FileCloudClient.ShowErrorDlg("Directory name already exists, directory don't create!");
+                    });
+                }else{
+                    Platform.runLater(() -> {
+                        FileCloudClient.ShowErrorDlg("Server error: " + srvMsg.getCommandData());
+                    });
+                }
+            });
         }
-        its.add(new TableFileInfo("D", "Новая папка" + (coincident==0 ? "": " " + coincident),0, FileTypes.DIRECTORY));
-        serverFilesTab.getSelectionModel().select(its.size()-1);
-        forceEditCell = true;
-        forceMakeDir = true;
-        serverFilesTab.edit(its.size()-1, srvfile_name);
+
+    }
+
+    public void srv_reNameAction(ActionEvent actionEvent) {
+
+        ObservableList<TableFileInfo> its = serverFilesTab.getItems();
+        int ind = serverFilesTab.getSelectionModel().getSelectedIndex();
+        TableFileInfo currentRow = its.get(ind);
+        String oldName = currentRow.getFile_name().getValue();
+
+        TextInputDialog dialog = new TextInputDialog(currentRow.getFile_name().getValue());
+        dialog.setTitle("Rename file/directory");
+        dialog.setHeaderText("Enter new file/directory name");
+        dialog.setContentText("Name");
+        Optional<String> result = dialog.showAndWait();
+
+        final String[] dirName = {""};
+        result.ifPresent(name->{
+            dirName[0] = name;
+        });
+
+        String newName = dirName[0];
+
+        if(!dirName[0].isEmpty()){
+            if(newName.equals(oldName)){
+                return;
+            }
+
+            Message msg = Message.builder()
+                    .command(CommandIDs.REQUEST_MOVE)
+                    .commandData(newName)
+                    .commandData2(oldName)
+                    .build();
+
+            network.sendMessage(msg, (srvMsg, ctx) -> {
+                if(srvMsg.getCommand() == CommandIDs.RESPONCE_OK){
+                    Platform.runLater(() -> {
+                        getServerFiles();
+                    });
+                }else if (srvMsg.getCommand() == CommandIDs.RESPONCE_FILEEXIST) {
+                    Platform.runLater(() -> {
+                        FileCloudClient.ShowErrorDlg("File with such name already exist, rename canceled!");
+                    });
+                }else{
+                    Platform.runLater(() -> {
+                        FileCloudClient.ShowErrorDlg("Server error: " + srvMsg.getCommandData());
+                    });
+                }
+            });
+        }
+
     }
 
     public void srv_delete(ActionEvent actionEvent) throws IOException {
 
         ObservableList<TableFileInfo> selectedItems = serverFilesTab.getSelectionModel().getSelectedItems();
+
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Delete file");
+        String descDelFiles = "";
+        if(selectedItems.size()<5){
+            for (TableFileInfo ti: selectedItems) {
+                descDelFiles += ti.getFile_name().getValue()+"\n";
+            }
+        }else{
+            descDelFiles = selectedItems.size() + " selected items";
+        }
+        alert.setHeaderText("A you sure want to delete file(s)?");
+        alert.setContentText(descDelFiles);
+        Optional<ButtonType> option = alert.showAndWait();
+        if(option.get() != ButtonType.OK){
+            return;
+        }
 
         List<FileInfo> fileList = new ArrayList<>();
 
@@ -761,6 +1002,10 @@ public class MainWndController implements Initializable {
                                 }else if (srvMsg.getCommand() == CommandIDs.RESPONCE_OK) {
                                     updateProgress(1, 1);
                                     updateMessage(srvMsg.getCommandData());
+                                    Platform.runLater(()->{
+                                        pgWindow.close();
+                                        getServerFiles();
+                                    });
                                 } else {
                                     final String errorText = "Enexpected answer from server: " + srvMsg.getCommandData();
                                     Platform.runLater(() -> {
@@ -785,22 +1030,6 @@ public class MainWndController implements Initializable {
 
         });
 
-    }
-
-    public void clientFilesOnKeyPressed(KeyEvent keyEvent) {
-        if (keyEvent.getCode() == KeyCode.F2) {
-            int ind = clientFilesTab.getSelectionModel().getSelectedIndex();
-            clientFilesTab.getItems().get(ind).setEditIsOn(true);
-            clientFilesTab.edit(ind, file_name);
-        }
-    }
-
-    public void serverFilesOnKeyPressed(KeyEvent keyEvent){
-        if (keyEvent.getCode() == KeyCode.F2) {
-            int ind = serverFilesTab.getSelectionModel().getSelectedIndex();
-            serverFilesTab.getItems().get(ind).setEditIsOn(true);
-            serverFilesTab.edit(ind, srvfile_name);
-        }
     }
 
     public void clientFilesOnClick(MouseEvent mouseEvent) {
@@ -865,7 +1094,7 @@ public class MainWndController implements Initializable {
         readFiles(clientFilesTab, file_name, file_icon, file_size, fs.getFullList());
     }
 
-    public void servertUpDir(ActionEvent actionEvent) {
+    public void serverUpDir(ActionEvent actionEvent) {
         Message msg = Message.builder()
                 .command(CommandIDs.REQUEST_UPTODIR)
                 .build();
@@ -918,6 +1147,9 @@ public class MainWndController implements Initializable {
     }
 
     public void getServerFiles() {
+
+        log.debug("Getting files list from server");
+
         Message mes = Message.builder()
                 .command(CommandIDs.REQUEST_FILELIST)
                 .build();
@@ -926,7 +1158,7 @@ public class MainWndController implements Initializable {
                 (srvMsg, ctx) -> {
                     CommandIDs cmdID = srvMsg.getCommand();
                     if (cmdID == CommandIDs.RESPONCE_FILELIST) {
-                        log.debug("Getting files list");
+                        log.debug("Get response files list");
                         try (
                                 ByteArrayInputStream bis = new ByteArrayInputStream(srvMsg.getData());
                                 ObjectInputStream ois = new ObjectInputStream(bis);
@@ -937,22 +1169,22 @@ public class MainWndController implements Initializable {
                             });
                             log.debug("Read files from server");
                         } catch (Exception e) {
+                            log.error("Error: {}", e.toString());
                             Platform.runLater(() -> {
-                                log.error(e.toString());
                                 FileCloudClient.ShowErrorDlg(e.getMessage());
                             });
                         }
                         getServerDir();
                     } else if (cmdID == CommandIDs.RESPONCE_SERVERERROR) {
+                        log.error("Server error: {}", srvMsg.getCommandData());
                         Platform.runLater(() -> {
                             String s = String.format("Server error: %s", srvMsg.getCommandData());
-                            log.error(s);
                             FileCloudClient.ShowErrorDlg(s);
                         });
                     } else if (cmdID == CommandIDs.RESPONCE_UNEXPECTEDCOMMAND) {
+                        log.error("Unexpected command");
                         Platform.runLater(() -> {
                             String s = String.format("Unexpected command");
-                            log.error(s);
                             FileCloudClient.ShowErrorDlg(s);
                         });
                     } else {
@@ -1000,14 +1232,18 @@ public class MainWndController implements Initializable {
             authWindow.initOwner(FileCloudClient.mainStage);
             FileCloudClient.authDlg = authWindow;
             authWindow.show();
+
+            network = Network.getInstance();
+
         }
     }
 
     public void closeConnect(ActionEvent actionEvent) {
-        if (network.socketChannel != null && network.socketChannel.isActive()) {
-            network.socketChannel.close();
+        if (network.getSocketChannel() != null && network.getSocketChannel().isActive()) {
+            Network.shutDown();
             serverFilesTab.getItems().clear();
             serverPath.clear();
+            FileCloudClient.setAuth(false);
             FileCloudClient.ShowInfoDlg("Disconnected");
         }
     }

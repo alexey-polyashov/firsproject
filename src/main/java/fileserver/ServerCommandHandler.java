@@ -36,9 +36,9 @@ public class ServerCommandHandler  extends SimpleChannelInboundHandler<Message> 
 
 
     @Override
-    protected void channelRead0(ChannelHandlerContext ctx, Message msg) throws Exception {
+    protected void channelRead0(ChannelHandlerContext ctx, Message cliMsg) throws Exception {
 
-        CommandIDs cmdID = msg.getCommand();
+        CommandIDs cmdID = cliMsg.getCommand();
         log.info("Receive command {}",cmdID);
 
         if(cmdID == CommandIDs.REQUEST_FILELIST){
@@ -62,11 +62,53 @@ public class ServerCommandHandler  extends SimpleChannelInboundHandler<Message> 
                 ctx.writeAndFlush(mes);
             }
         }
+        else if(cmdID == CommandIDs.REQUEST_RECEIVEFILESINDIR){
+            List<FileInfo> fl = fs.getFilesInDir(Paths.get(cliMsg.getCommandData()));
+            Message mes = Message.builder()
+                    .command(CommandIDs.RESPONCE_OK)
+                    .build();
+            try(
+                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                    ObjectOutputStream oos = new ObjectOutputStream(bos);
+            ){
+                oos.writeObject(fl);
+                mes.setData(bos.toByteArray());
+                ctx.writeAndFlush(mes);
+            }catch (Exception e){
+                log.error("Server error - {}", e.toString());
+                mes = Message.builder()
+                        .command(CommandIDs.RESPONCE_SERVERERROR)
+                        .commandData(e.toString())
+                        .build();
+                ctx.writeAndFlush(mes);
+            }
+        }
+        else if(cmdID == CommandIDs.REQUEST_RECEIVEFOLDERSINDIR){
+            List<FileInfo> fl = fs.getSubFoldersInDir(Paths.get(cliMsg.getCommandData()));
+            Message mes = Message.builder()
+                    .command(CommandIDs.RESPONCE_OK)
+                    .build();
+            try(
+                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                    ObjectOutputStream oos = new ObjectOutputStream(bos);
+            ){
+                oos.writeObject(fl);
+                mes.setData(bos.toByteArray());
+                ctx.writeAndFlush(mes);
+            }catch (Exception e){
+                log.error("Server error - {}", e.toString());
+                mes = Message.builder()
+                        .command(CommandIDs.RESPONCE_SERVERERROR)
+                        .commandData(e.toString())
+                        .build();
+                ctx.writeAndFlush(mes);
+            }
+        }
         else if(cmdID == CommandIDs.REQUEST_SENDFILE){
-            Path fName = fs.getAbsolutePathToFile(msg.getCommandData());
+            Path fName = fs.getAbsolutePathToFile(cliMsg.getCommandData());
             log.debug("Try to write in file {}", fName);
             try {
-                Message mes = fs.putFilePart(fName, msg);
+                Message mes = fs.putFilePart(fName, cliMsg);
                 ctx.writeAndFlush(mes);
             }catch(Exception e){
                 log.error("Save file error: " + e.toString());
@@ -96,7 +138,7 @@ public class ServerCommandHandler  extends SimpleChannelInboundHandler<Message> 
             ctx.writeAndFlush(mes);
         }
         else if(cmdID == CommandIDs.REQUEST_CHANGEDIR){
-            fs.changeDir(msg.getCommandData());
+            fs.changeDir(cliMsg.getCommandData());
             Message mes = Message.builder()
                     .command(CommandIDs.RESPONCE_OK)
                     .commandData(fs.getCurrentPath())
@@ -111,7 +153,7 @@ public class ServerCommandHandler  extends SimpleChannelInboundHandler<Message> 
             ctx.writeAndFlush(mes);
         }
         else if(cmdID == CommandIDs.REQUEST_RECEIVEFILE){
-            Path fName = fs.getAbsolutePathToFile(msg.getCommandData());
+            Path fName = fs.getAbsolutePathToFile(cliMsg.getCommandData());
             log.debug("Try to send file {}", fName);
             try {
                 Message mes = fs.getFilePart(fName);
@@ -127,7 +169,7 @@ public class ServerCommandHandler  extends SimpleChannelInboundHandler<Message> 
             }
         }
         else if(cmdID == CommandIDs.REQUEST_CLIENTERROR){
-            log.debug("Client error {}", msg.getCommandData());
+            log.debug("Client error {}", cliMsg.getCommandData());
             fs.resetChannel();
         }
         else if(cmdID == CommandIDs.REQUEST_MOVE){
@@ -135,11 +177,11 @@ public class ServerCommandHandler  extends SimpleChannelInboundHandler<Message> 
                     .command(CommandIDs.RESPONCE_OK)
                     .build();
             try {
-                log.debug("Move file: {} , to {}", msg.getCommandData2(), msg.getCommandData());
-                fs.move(msg.getCommandData2(), msg.getCommandData2());
+                log.debug("Move file: {} , to {}", cliMsg.getCommandData2(), cliMsg.getCommandData());
+                fs.move(cliMsg.getCommandData2(), cliMsg.getCommandData());
             }
             catch (FileAlreadyExistsException e){
-                log.error("File already exists exception: {}", msg.getCommandData());
+                log.error("File already exists exception: {}", cliMsg.getCommandData());
                 mes.setCommand(CommandIDs.RESPONCE_FILEEXIST);
             }
             catch (Exception e){
@@ -154,11 +196,11 @@ public class ServerCommandHandler  extends SimpleChannelInboundHandler<Message> 
                     .command(CommandIDs.RESPONCE_OK)
                     .build();
             try {
-                log.debug("Make dir: {}", msg.getCommandData());
-                fs.makeDir(Paths.get(msg.getCommandData()));
+                log.debug("Make dir: {}", cliMsg.getCommandData());
+                fs.makeDir(Paths.get(cliMsg.getCommandData()));
             }
             catch (FileAlreadyExistsException e){
-                log.error("File already exists exception: {}", msg.getCommandData());
+                log.error("File already exists exception: {}", cliMsg.getCommandData());
                 mes.setCommand(CommandIDs.RESPONCE_FILEEXIST);
             }
             catch (Exception e){
@@ -171,7 +213,7 @@ public class ServerCommandHandler  extends SimpleChannelInboundHandler<Message> 
         else if(cmdID == CommandIDs.REQUEST_DELETE){
 
             try (
-                    ByteArrayInputStream bis = new ByteArrayInputStream(msg.getData());
+                    ByteArrayInputStream bis = new ByteArrayInputStream(cliMsg.getData());
                     ObjectInputStream ois = new ObjectInputStream(bis);
             ) {
                 List<FileInfo> fl = (List<FileInfo>) ois.readObject();
@@ -205,7 +247,7 @@ public class ServerCommandHandler  extends SimpleChannelInboundHandler<Message> 
             }
         }
         else{
-            String str = String.format("Unexpected command: id - %s, data - %s", cmdID, msg.getCommandData());
+            String str = String.format("Unexpected command: id - %s, data - %s", cmdID, cliMsg.getCommandData());
             log.error(str);
             Message mes = Message.builder()
                     .command(CommandIDs.RESPONCE_UNEXPECTEDCOMMAND)
