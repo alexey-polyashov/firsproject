@@ -1,6 +1,7 @@
 package common;
 
-import client.MainWndController;
+import lombok.Builder;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
@@ -74,6 +75,15 @@ public class CloudFileSystem {
         return currentFolder.toString();
     }
 
+    public void changeDrive(String drive){
+        if(!serverSide){
+            currentFolder = Paths.get(drive);
+        }
+    }
+
+    public Path getCurrentRoot(){
+        return currentFolder.getRoot();
+    }
 
     public void goToParentFolder(){
         if(serverSide){
@@ -520,4 +530,5 @@ public class CloudFileSystem {
         return srvMes;
 
     }
+
 }

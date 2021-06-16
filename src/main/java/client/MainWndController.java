@@ -4,6 +4,7 @@ import common.*;
 
 import javafx.application.Platform;
 import javafx.beans.property.*;
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
@@ -17,8 +18,11 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import javafx.util.Callback;
 import lombok.Data;
 import lombok.SneakyThrows;
@@ -48,12 +52,17 @@ public class MainWndController implements Initializable {
     public StringBuffer currentProcesseddFile = new StringBuffer("");
     public volatile AtomicBoolean isTransferOn = new AtomicBoolean(false);
 
+
     private Network network;
 
     public boolean getTransferState() {
         return isTransferOn.get();
     }
 
+    @FXML
+    public VBox mainPane;
+    @FXML
+    public ComboBox<String> drive = new ComboBox<>();
     @FXML
     public TextField clientPath;
     @FXML
@@ -74,6 +83,24 @@ public class MainWndController implements Initializable {
     private TableView<TableFileInfo> serverFilesTab;
     @FXML
     private TableView<TableFileInfo> clientFilesTab;
+
+    public void selectDrive(ActionEvent actionEvent) {
+        fs.changeDrive(drive.getValue());
+        readFiles(clientFilesTab, file_name, file_icon, file_size, fs.getFullList());
+    }
+
+    public void closeAplication(ActionEvent actionEvent) {
+        ((Stage)(mainPane.getScene().getWindow())).close();
+    }
+
+    public void showAbout(ActionEvent actionEvent) throws IOException {
+        Stage aboutWnd = new Stage();
+        aboutWnd.setScene(new Scene(FXMLLoader.load(getClass().getResource("about.fxml")), Color.TRANSPARENT));
+        aboutWnd.initStyle(StageStyle.TRANSPARENT);
+        aboutWnd.initModality(Modality.WINDOW_MODAL);
+        aboutWnd.initOwner(FileCloudClient.mainStage);
+        aboutWnd.show();
+    }
 
     @Data
     class TableFileInfo {
@@ -130,7 +157,18 @@ public class MainWndController implements Initializable {
             e.printStackTrace();
         }
 
+        File[] drives = File.listRoots();
+        ObservableList<String> drivesList = FXCollections.observableArrayList();
+        for (File f: drives) {
+            drivesList.add(f.getPath());
+        }
+        drive.getItems().addAll(drivesList);
+        drive.setValue(fs.getCurrentRoot().toString());
+
         network = Network.getInstance();
+
+        clientFilesTab.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+        serverFilesTab.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
         clientFilesTab.setRowFactory(
                 new Callback<TableView<TableFileInfo>, TableRow<TableFileInfo>>() {
@@ -1131,6 +1169,8 @@ public class MainWndController implements Initializable {
                 return -1;
             } else if (o1.file_type == FileTypes.FILE && o2.file_type != FileTypes.FILE) {
                 return 1;
+            }else if (o1.file_type == FileTypes.DIRECTORY && o2.file_type == FileTypes.FILE) {
+                return -1;
             } else if (o1.file_name.greaterThanOrEqualTo(o2.file_name).get()) {
                 return 1;
             }

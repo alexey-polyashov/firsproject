@@ -8,7 +8,8 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="fileCloud" />
-        <module name="FileCloud" />
+        <module name="server" />
+        <module name="client" />
       </profile>
     </annotationProcessing>
   </component>

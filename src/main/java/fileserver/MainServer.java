@@ -15,8 +15,13 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class MainServer {
 
+    DBService dbService;
 
     public void start() {
+
+        dbService = new DBServiceMySQL();
+        dbService.InitDB();
+
         EventLoopGroup auth = new NioEventLoopGroup(1);
         EventLoopGroup worker = new NioEventLoopGroup();
         try {
@@ -29,7 +34,7 @@ public class MainServer {
                             channel.pipeline().addLast(
                                     new ObjectEncoder(),
                                     new ObjectDecoder(ClassResolvers.cacheDisabled(null)),
-                                    new ServerAuthHandler()
+                                    new ServerAuthHandler(dbService)
                             );
                         }
                     });
