@@ -408,6 +408,7 @@ public class CloudFileSystem {
         ByteBuffer data = ByteBuffer.allocate(Options.CHUNK_SIZE);
         int len = sbCh.read(data);
 
+
         Message msg = Message.builder()
                 .length(fSize)
                 .partLen(len)
@@ -439,10 +440,14 @@ public class CloudFileSystem {
             partNum = 0;
         }
 
-        ByteBuffer wData = ByteBuffer.wrap(incMes.getData(), 0, incMes.getPartLen());
-        totalTransferBytes+=incMes.getPartLen();
-        sbCh.position(incMes.getPartNum()*Options.CHUNK_SIZE);
-        int len = sbCh.write(wData);
+        int len = 0;
+
+        if(incMes.getPartLen()>=0){
+            ByteBuffer wData = ByteBuffer.wrap(incMes.getData(), 0, incMes.getPartLen());
+            totalTransferBytes+=incMes.getPartLen();
+            sbCh.position(incMes.getPartNum()*Options.CHUNK_SIZE);
+            len = sbCh.write(wData);
+        }
 
         Message msg = Message.builder()
                 .length(len)
