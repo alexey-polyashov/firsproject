@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+
+<AnchorPane prefHeight="194.0" prefWidth="252.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="server.ServerController">
+   <children>
+      <Button layoutX="14.0" layoutY="46.0" mnemonicParsing="false" prefHeight="29.0" prefWidth="221.0" text="Start" onAction="#start"/>
+      <Button layoutX="14.0" layoutY="85.0" mnemonicParsing="false" prefHeight="30.0" prefWidth="222.0" text="Stop" onAction="#stop"/>
+      <Label alignment="CENTER" contentDisplay="CENTER" layoutX="14.0" layoutY="14.0" prefHeight="18.0" prefWidth="222.0" text="FileCloud Server" textAlignment="CENTER" textFill="#d51616" />
+      <Label fx:id="serverState" alignment="CENTER" layoutX="14.0" layoutY="131.0" prefHeight="18.0" prefWidth="222.0" text="Not running" textFill="#01a409" />
+   </children>
+</AnchorPane>

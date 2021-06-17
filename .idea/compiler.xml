@@ -7,9 +7,9 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="fileCloud" />
-        <module name="server" />
-        <module name="client" />
+        <module name="fcClient" />
+        <module name="fcCommon" />
+        <module name="fcServer" />
       </profile>
     </annotationProcessing>
   </component>

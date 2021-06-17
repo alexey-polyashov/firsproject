@@ -4,13 +4,14 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.example</groupId>
-    <artifactId>fileCloud</artifactId>
+    <groupId>org.filecloud</groupId>
+    <artifactId>FileCloud_final</artifactId>
     <packaging>pom</packaging>
     <version>1.0-SNAPSHOT</version>
     <modules>
-        <module>server</module>
-        <module>client</module>
+        <module>fcClient</module>
+        <module>fcServer</module>
+        <module>fcCommon</module>
     </modules>
 
     <properties>
@@ -35,25 +36,9 @@
             <version>RELEASE</version>
             <scope>compile</scope>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/javax.mail/javax.mail-api -->
-        <dependency>
-            <groupId>com.sun.mail</groupId>
-            <artifactId>javax.mail</artifactId>
-            <version>1.6.0</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/javax.activation/activation -->
-        <dependency>
-            <groupId>javax.activation</groupId>
-            <artifactId>activation</artifactId>
-            <version>1.1.1</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/org.xerial/sqlite-jdbc -->
-        <dependency>
-            <groupId>org.xerial</groupId>
-            <artifactId>sqlite-jdbc</artifactId>
-            <version>3.34.0</version>
-        </dependency>
 
     </dependencies>
+
+
 
 </project>

@@ -1,0 +1,16 @@
+server\User.class
+server\AuthService$1.class
+server\MainServer.class
+server\DBServiceMySQL$UserRecord.class
+server\AuthService.class
+server\EmailNotFoundException.class
+server\MainServer$1.class
+server\ServerController.class
+server\LoginIsUsedException.class
+server\DBService.class
+server\ServerAuthHandler.class
+server\ServerCommandHandler.class
+server\DBServiceMySQL.class
+server\EmailIsUsedException.class
+server\LoginFailException.class
+server\Starter.class
