@@ -1,0 +1,14 @@
+common\FileTypes.class
+common\CloudFileSystem$1.class
+common\FileInfo.class
+common\CommandIDs.class
+common\MessageParser.class
+common\CloudFileSystem$2.class
+common\UserInfo$UserInfoBuilder.class
+common\Message$MessageBuilder.class
+common\FileSystemStates.class
+common\UserInfo.class
+common\CloudFileSystem.class
+common\CloudFileSystem$3.class
+common\Message.class
+common\Options.class
