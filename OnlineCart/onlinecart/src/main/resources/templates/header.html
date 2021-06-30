@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<body>
+
+<div th:fragment="header">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div id = "head_menu" th:fragment="head_menu">
+        <list id = "menu_items" class="navbar-nav me-auto mb-2 mb-lg-0">
+            <li class="nav-item"><a class="nav-link" href="./home">Home</a></li>
+            <li class="nav-item"><a class="nav-link" href="./repository">Repository</a></li>
+            <li class="nav-item"><a class="nav-link" href="./cart">Cart</a></li>
+        </list>
+    </div>
+    </nav>
+</div>
+
+</body>
+</html>
