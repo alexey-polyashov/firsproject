@@ -1,17 +1,16 @@
-package ru.polyan.onlinecart;
+package ru.polyan.onlinecart.model;
 
 public class Product {
 
     private int id;
-    String title;
-    float cost;
+    private String title;
+    private float cost;
 
     public void setTitle(String title) {
         this.title = title;
     }
 
     public Product() {
-
     }
 
     public void setCost(float cost) {

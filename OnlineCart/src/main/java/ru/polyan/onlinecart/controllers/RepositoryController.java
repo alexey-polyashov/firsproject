@@ -5,26 +5,26 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import ru.polyan.onlinecart.IProductRepository;
-import ru.polyan.onlinecart.Product;
-import ru.polyan.onlinecart.ProductRepositoryList;
+import ru.polyan.onlinecart.repositories.IProductRepository;
+import ru.polyan.onlinecart.model.Product;
+import ru.polyan.onlinecart.services.ProductService;
+import ru.polyan.onlinecart.utils.ResourceNotFoundException;
 
 import java.util.List;
 
 @Controller
 public class RepositoryController {
 
-    IProductRepository<Product> productRepository = new ProductRepositoryList();
-
+    ProductService productService;
 
     @Autowired
-    void init(){
-        productRepository.initRepository();
+    void RepositoryController(ProductService productService){
+        this.productService = productService;
     }
 
     @GetMapping(value = "/repository")
     public String repository(Model model){
-        List<Product> prodList = productRepository.productList();
+        List<Product> prodList = productService.productList();
         if(!model.containsAttribute("errors")){
             model.addAttribute("errors", "");
         }
@@ -46,8 +46,12 @@ public class RepositoryController {
 
         try {
             parseId = Integer.parseInt(id);
-            if(productRepository.getProductByID(parseId) != null){
-                error += "Product with ID:" + parseId + " already exists; ";
+            try {
+                if(productService.getProductByID(parseId) != null){
+                    error += "Product with ID:" + parseId + " already exists; ";
+                }
+            } catch (ResourceNotFoundException e) {
+                //nothing
             }
         }catch (NumberFormatException e){
             error += "ID is not number; ";
@@ -67,7 +71,7 @@ public class RepositoryController {
             redirAttr.addFlashAttribute("errors", error);
         }else {
             redirAttr.addFlashAttribute("message", "Product is added to list.");
-            productRepository.addProduct(new Product(parseId, title, parseCost));
+            productService.addProduct(new Product(parseId, title, parseCost));
         }
 
         return "redirect:../repository";

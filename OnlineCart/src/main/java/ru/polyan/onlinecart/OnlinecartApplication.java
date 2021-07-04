@@ -1,4 +1,4 @@
-package ru.polyan.onlinecart.controllers;
+package ru.polyan.onlinecart;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
