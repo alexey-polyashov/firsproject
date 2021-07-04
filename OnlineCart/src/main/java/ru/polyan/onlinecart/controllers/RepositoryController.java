@@ -9,6 +9,7 @@ import ru.polyan.onlinecart.repositories.IProductRepository;
 import ru.polyan.onlinecart.model.Product;
 import ru.polyan.onlinecart.services.ProductService;
 import ru.polyan.onlinecart.utils.ResourceNotFoundException;
+import ru.polyan.onlinecart.utils.ServiceResponse;
 
 import java.util.List;
 
@@ -26,7 +27,7 @@ public class RepositoryController {
     public String repository(Model model){
         List<Product> prodList = productService.productList();
         if(!model.containsAttribute("errors")){
-            model.addAttribute("errors", "");
+            model.addAttribute("errors", new String[0]);
         }
         if(!model.containsAttribute("message")){
             model.addAttribute("message", "");
@@ -38,40 +39,13 @@ public class RepositoryController {
     }
 
     @PostMapping(value = "/repository/addposition")
-    public String addPosition(Model model, RedirectAttributes redirAttr, @RequestParam String id, @RequestParam String title, @RequestParam String cost){
+    public String addPosition(Model model, RedirectAttributes redirAttr, @RequestParam String title, @RequestParam String cost){
 
-        int parseId =0;
-        float parseCost = 0f;
-        String error = "";
-
-        try {
-            parseId = Integer.parseInt(id);
-            try {
-                if(productService.getProductByID(parseId) != null){
-                    error += "Product with ID:" + parseId + " already exists; ";
-                }
-            } catch (ResourceNotFoundException e) {
-                //nothing
-            }
-        }catch (NumberFormatException e){
-            error += "ID is not number; ";
-        }
-        try {
-            parseCost = Float.parseFloat(cost);
-        }catch (NumberFormatException e){
-            error += "COST is not number; ";
-        }
-
-        if(title.isEmpty()){
-            error += "TITLE is empty; ";
-        }
-
-        if(!error.isEmpty()){
-            error = "ERRORS: " + error;
-            redirAttr.addFlashAttribute("errors", error);
-        }else {
+        ServiceResponse sr = productService.addProduct(title, cost);
+        if(sr.isSuccess()){
             redirAttr.addFlashAttribute("message", "Product is added to list.");
-            productService.addProduct(new Product(parseId, title, parseCost));
+        }else{
+            redirAttr.addFlashAttribute("errors", sr.getErrors());
         }
 
         return "redirect:../repository";

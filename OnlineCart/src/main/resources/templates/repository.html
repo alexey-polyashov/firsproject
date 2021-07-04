@@ -55,12 +55,6 @@
                 <span th:text = "${message}"></span>
             </div>
             <div class="form-group row mb-2">
-                <label for="field_id" class="col-sm-2 col-form-label">ID</label>
-                <div class="col-sm-10">
-                    <input id="field_id" type="text" name="id" class="form-control" >
-                </div>
-            </div>
-            <div class="form-group row mb-2">
                 <label for="field_title" class="col-sm-2 col-form-label">TITLE</label>
                 <div class="col-sm-10">
                     <input id="field_title" type="text" name="title" class="form-control" >
@@ -72,8 +66,13 @@
                     <input id="field_cost" type="text" name="cost" class="form-control" >
                 </div>
             </div>
-            <div  class="alert alert-danger" th:if="${!errors.isEmpty()}" role="alert">
-                <span th:utext = "${errors}"></span>
+            <div  class="alert alert-danger" th:if="${errors.length!=0}" role="alert">
+                <span>ERRORS:</span><br>
+                <table>
+                <tr th:each = "err : ${errors}">
+                    <td th:text = "${err}"></td>
+                </tr>
+                </table>
             </div>
             <button type="submit" class="btn btn-primary mb-2">Add to list</button>
         </form>

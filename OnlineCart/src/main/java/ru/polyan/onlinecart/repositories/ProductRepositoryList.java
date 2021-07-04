@@ -18,11 +18,11 @@ public class ProductRepositoryList implements IProductRepository {
     @PostConstruct
     public void initRepository() {
         productList = new ArrayList<>();
-        productList.add(new Product(1, "Potato", 20));
-        productList.add(new Product(2, "Carrot", 7));
-        productList.add(new Product(3, "Tomato", 50));
-        productList.add(new Product(4, "Strawberry", 80));
-        productList.add(new Product(5, "Banana", 25));
+        productList.add(new Product(0, "Potato", 20));
+        productList.add(new Product(1, "Carrot", 7));
+        productList.add(new Product(2, "Tomato", 50));
+        productList.add(new Product(3, "Strawberry", 80));
+        productList.add(new Product(4, "Banana", 25));
     }
 
     @Override
@@ -36,8 +36,9 @@ public class ProductRepositoryList implements IProductRepository {
     }
 
     @Override
-    public boolean addProduct(Product product) {
-        return productList.add(product);
+    public boolean addProduct(String title, float cost) {
+        Product prod = new Product( productList.size()+1, title, cost);
+        return productList.add(prod);
     }
 
     @Override

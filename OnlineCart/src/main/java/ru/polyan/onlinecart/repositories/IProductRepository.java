@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface IProductRepository {
     void initRepository();
-    boolean addProduct(Product product);
+    boolean addProduct(String title, float cost);
     List<Product> productList();
     boolean removeProduct(Product product);
     Product getProductByID(int prodId) throws ResourceNotFoundException;
