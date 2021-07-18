@@ -1,37 +1,28 @@
 package ru.polyan.onlinecart.model;
 
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import javax.persistence.*;
+
+@Entity
+@Table(name="products")
+@Data
+@NoArgsConstructor
 public class Product {
 
-    private int id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name="id")
+    private Long id;
+    @Column(name="title")
     private String title;
-    private float cost;
+    @Column(name="price")
+    private double price;
 
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public Product() {
-    }
-
-    public void setCost(float cost) {
-        this.cost = cost;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public float getCost() {
-        return cost;
-    }
-
-    public Product(int id, String title, float cost) {
+    public Product(Long id, String title, double price) {
         this.id = id;
         this.title = title;
-        this.cost = cost;
+        this.price = price;
     }
 }

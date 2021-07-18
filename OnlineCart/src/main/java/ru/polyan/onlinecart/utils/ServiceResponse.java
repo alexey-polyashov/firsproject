@@ -1,5 +1,10 @@
 package ru.polyan.onlinecart.utils;
 
+import lombok.Builder;
+import lombok.Data;
+
+@Data
+@Builder
 public class ServiceResponse {
     private boolean success;
     private String[] errors;
@@ -9,11 +14,4 @@ public class ServiceResponse {
         this.errors = errors;
     }
 
-    public boolean isSuccess() {
-        return success;
-    }
-
-    public String[] getErrors() {
-        return errors;
-    }
 }
